@@ -14,38 +14,26 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'docker build -t fastapi-task-api:latest .'
+                script{
+                 docker_build("fastapi-task-api","latest","uzairhameed")
+                               }
             }
         }
 
         stage('Push to DockerHub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerHubCred',
-                                                  usernameVariable: 'DH_USER',
-                                                  passwordVariable: 'DH_PASS')]) {
-                    sh '''
-                        echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
-                        docker tag fastapi-task-api:latest "$DH_USER/fast-task-api:latest"
-                        docker tag fastapi-task-api:latest "$DH_USER/fast-task-api:${BUILD_NUMBER}"
-                        docker push "$DH_USER/fast-task-api:latest"
-                        docker push "$DH_USER/fast-task-api:${BUILD_NUMBER}"
-                    '''
-                }
+                script{
+                       docker_push('fastapi-task-api', 'fast-task-api', ['latest', env.BUILD_NUMBER]) 
+                      }
+
             }
         }
 
         stage('Deploy') {
             steps {
-                withCredentials([file(credentialsId: 'fastapi-env', variable: 'ENV_FILE')]) {
-                    sh '''
-                        cp "$ENV_FILE" .env
-                        chmod 600 .env
-                        docker compose down --remove-orphans
-                        docker compose up -d db
-                        docker compose run --rm -T api alembic upgrade head
-                        docker compose up -d
-                    '''
-                }
+                script{
+                      docker_compose()
+                       }
             }
         }
     }
