@@ -1,12 +1,14 @@
+@Library('Shared') _
+
 pipeline {
     agent { label 'tommy' }
 
     stages {
         stage('Code') {
             steps {
-                echo 'Cloning the code'
-                git url: 'https://github.com/uzairhameed/fastapi-task-management-api.git', branch: 'main'
-                echo 'Code clone successful'
+                script{
+                clone('https://github.com/uzairhameed/fastapi-task-management-api.git','main')
+                }
             }
         }
 
